@@ -4,14 +4,13 @@ template <class T>
 class Esp8266
 {
 public:
-  static const unsigned int DEFAULT_TIMEOUT =  1000;
-  static const unsigned int SHORT_TIMEOUT   =  1000;
-  static const unsigned int MEDIUM_TIMEOUT  =  2000;
-  static const unsigned int LONG_TIMEOUT    = 10000;
+  static const unsigned int DEFAULT_TIMEOUT =  1000;  ///< Timeout to send simple commands to the module, e.g. isOK()
+  static const unsigned int MEDIUM_TIMEOUT  =  5000;  ///< Timemout for medium lasting commands, e.g. connect()
+  static const unsigned int LONG_TIMEOUT    = 10000;  ///< Timeout for long commenads, e.g. joinAccessPoint()
 
   typedef enum {
-    UDP,
-    TCP
+    TCP,            ///< Transmission control protocol for stateful communications (default)
+    UDP             ///< User datagram protocol for connection-less communications
   } ProtocolMode;
 
   Esp8266(T &serial) : serial(serial) {
@@ -70,21 +69,38 @@ public:
     * @param mode The connection mode. Currently TCP or UDP.
     * @return Returns "true" if the command was successful and the connection was established, "false" otherwise.
     */
-   bool connect(unsigned channelId, const String &addr, unsigned int port, ProtocolMode mode = TCP);
+   bool connect(unsigned channelId, const String &addr, unsigned int port, ProtocolMode mode = TCP) const;
 
    /**
     * Diconnects a channel to a server.
     * @param channelId The channel to disconnect
     * @return Returns "true" if the command was successful, "false" otherwise.
     */
-   bool disconnect(unsigned channelId);
+   bool disconnect(unsigned channelId) const;
+
+   /**
+    * Sends data over the connection channel to the server.
+    * @param channelId The channel to send the data.
+    * @bytes The buffer to send.
+    * @length The length of the buffer
+    * @return Returns "true" if the command was successful, "false" otherwise.
+    */
+   bool send(unsigned channelId, const char *bytes, const unsigned length) const;
 
 private:
+  // Variables
   T &serial;
   bool multipleConnections;
+
+  // Command Helpers
   void sendCommand(const String &command) const;
   const String readReply(unsigned int timeout = DEFAULT_TIMEOUT) const;
   bool wasCommandSuccessful(unsigned int timeout = DEFAULT_TIMEOUT) const;
+
+  // Stream Helper
   void setTimeout(unsigned int timout) const;
+  void flush() const;
+  void flushIn() const;
+  void flushOut() const;
 
 };

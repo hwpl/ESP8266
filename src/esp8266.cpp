@@ -136,7 +136,7 @@ bool Esp8266<T>::joinAccessPoint(const String &ssid, const String &passwd) const
 }
 
 template <class T>
-bool Esp8266<T>::connect(unsigned channelId, const String &addr, unsigned port, ProtocolMode mode)
+bool Esp8266<T>::connect(unsigned channelId, const String &addr, unsigned port, ProtocolMode mode) const
 {
   if (!multipleConnections)
     return false;
@@ -149,7 +149,7 @@ bool Esp8266<T>::connect(unsigned channelId, const String &addr, unsigned port, 
 }
 
 template <class T>
-bool Esp8266<T>::disconnect(unsigned channelId)
+bool Esp8266<T>::disconnect(unsigned channelId) const
 {
   if (!multipleConnections)
     return false;
@@ -160,12 +160,71 @@ bool Esp8266<T>::disconnect(unsigned channelId)
   return wasCommandSuccessful(MEDIUM_TIMEOUT);
 }
 
+template <class T>
+bool Esp8266<T>::send(unsigned channelId, const char *bytes, const unsigned length) const
+{
+  if (!multipleConnections) {
+    // return false;
+  }
+
+  // Send  "send" command
+  String cmd = buildSetCommand(F("CIPSEND"), String(channelId), length);
+  sendCommand(cmd);
+
+  // Is module ready to get data?
+  String reply = readReply();
+  if(!reply.endsWith(F("OK\r\n> ")))
+    return false;
+
+  // Write data
+  serial.write(bytes, length);
+
+  // Get answer
+  for (unsigned i = 0; i < 3; i++)
+  {
+    // Create temporary buffer
+    const unsigned bufflen = 64;
+    char buffer[bufflen+1];
+
+    // Read console until we detect the newline character
+    unsigned int len = serial.readBytesUntil(bufflen, buffer, '\n');
+    // Check if we have an answer
+    if (len == 0)
+      return false;
+
+    // Terminate string
+    buffer[len] = 0;
+
+    // Serial.printf("Send string received : \"%s\"\n", buffer);
+
+    // Check if we got an OK
+    if (strstr(buffer, "OK") != NULL)
+      return true;
+
+    // Check if we got an ERROR
+    if (strstr(buffer, "ERROR") != NULL)
+      return false;
+  }
+
+  // Return false after 3 tries (timeouts etc.)
+  return false;
+}
+
 // -------------------------------------------------------------------------- //
 // Private
 // -------------------------------------------------------------------------- //
+
+/**
+ * Reads the reply of an AT-command.
+ * @param timout The maximum time to wait to fill the reply string.
+ * return The reply of the command.
+ */
 template <class T>
 const String Esp8266<T>::readReply(unsigned timeout) const
 {
+  // Flush a sending buffer.
+  // flushOut();
+
   if (timeout == DEFAULT_TIMEOUT)
     return serial.readString();
 
@@ -175,23 +234,59 @@ const String Esp8266<T>::readReply(unsigned timeout) const
   return retString;
 }
 
+/**
+ * Checks if the answer of an AT-command was "OK".
+ * @param timout The maximum time to wait for the answer.
+ * @return Returns "true" if the AT command was successful.
+ */
 template <class T>
 bool Esp8266<T>::wasCommandSuccessful(unsigned timeout) const
 {
   return isReplyOK(readReply(timeout));
 }
 
+/// Sends an command with the tailing line feed of AT-commands
 template <class T>
 void Esp8266<T>::sendCommand(const String &command) const
 {
   serial.print(command);
   serial.print(F("\r\n"));
+  flushOut();
 }
 
+
+/// Sets the timeout to read strings from the input stream
 template <class T>
 void Esp8266<T>::setTimeout(unsigned timeout) const
 {
   serial.setTimeout(timeout);
 }
+
+/// Cleans the output stream
+template <class T>
+void Esp8266<T>::flushOut() const
+{
+  serial.flush();
+}
+
+/// Clean the input stream
+template <class T>
+void Esp8266<T>::flushIn() const
+{
+  while (serial.available()) {
+    serial.read();
+  }
+}
+
+/// Cleans the input and output buffer of the stream
+template <class T>
+void Esp8266<T>::flush() const
+{
+  flushOut();
+  flushIn();
+}
+
+
+
 
 template class Esp8266<SoftwareSerial>;

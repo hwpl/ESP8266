@@ -5,6 +5,7 @@
 SoftwareSerial mySerial(3,2); // RX, TX
 Esp8266<SoftwareSerial> esp(mySerial);
 
+/*
 test(isOk_succeeds)
 {
   bool ret = esp.isOk();
@@ -81,6 +82,23 @@ test (connect_viaTCPWithoutMultipleConnectionsFails)
 
   esp.disconnect(1);
   assertFalse(ret);
+}
+*/
+
+test (send_ByteDataSucceeds)
+{
+  esp.setMultipleConnections(true);
+  esp.disconnect(1);
+  esp.connect(1, "api.thingspeak.com", 80);
+
+  String data("GET /update?api_key=SSZQ72F4VTZW43YS&field1=1024\r\n\r\n");
+  bool ret = esp.send(1, data.c_str(), data.length());
+
+  assertTrue(ret);
+
+  mySerial.setTimeout(5000);
+  String retString = mySerial.readString();
+  Serial.printf("Ret string : \"%s\"", retString.c_str());
 }
 
 void setup()
