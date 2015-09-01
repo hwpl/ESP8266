@@ -29,6 +29,26 @@ public:
   bool isOk() const;
 
   /**
+   * Automatically probes and configures the BAUD rate of the module.
+   * The following rates are probed:
+   *  2400, 4800, 9600, 19200, 38400, 57600 and 115200.
+   *
+   * @note: The detected rate is also set to the serial stream.
+   * @return The found BAUD rate of the module. 0 if the module does not answer.
+   */
+   unsigned int configureBaud() const;
+
+
+   /**
+    * Changes the baud rate of the pair: connection and module.
+    * @note Command: AT+CIOBAUD=<baud>
+    * @parameter baud The new baud rate to set. The following rates are
+    *   supported: 2400, 4800, 9600, 19200, 38400, 57600 and 115200.
+    * @return True if the command was successful
+    */
+   bool setBaud(unsigned int baud) const;
+
+  /**
    * Sets the multiple connection support of the module.
    *
    * @note Command: AT+CIPMUX=<value>

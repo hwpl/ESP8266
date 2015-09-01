@@ -12,6 +12,28 @@ test(basic_isOk_succeeds)
   assertTrue(ret);
 }
 
+test(basic_configureBaude_returnsCorrectResults)
+{
+  mySerial.end();
+  unsigned baud = esp.configureBaud();
+
+  mySerial.begin(9600);
+  assertEqual(baud, 9600);
+}
+
+test(basic_setBaud_succeeds)
+{
+  // Set to new and back to old rate
+  bool ret = esp.setBaud(19200);
+  if (ret)
+    esp.setBaud(9600);
+  else
+    esp.configureBaud();
+
+  assertTrue(ret);
+}
+
+
 test(basic_isOk_withInvalidBaudSettingsFails)
 {
   mySerial.begin(115200);
@@ -28,7 +50,7 @@ test (basic_setMultipleConnections_succeeds)
   assertTrue(ret)
 }
 
-test (basic_getMultipleConnections_returnsCorrectly)
+test (basic_getMultipleConnections_returnsCorrectResults)
 {
   esp.setMultipleConnections(false);
   esp.setMultipleConnections(true);
@@ -97,13 +119,14 @@ test (send_withGetSucceeds)
 void setup()
 {
   Serial.begin(9600);
-  mySerial.begin(9600);
+
+  esp.configureBaud();
+  esp.setBaud(9600);
 }
 
 void loop()
 {
 
   Test::run();
-
   // esp.queryMultipleConnections();
 }

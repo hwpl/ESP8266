@@ -3,6 +3,10 @@
 #include <SoftwareSerial.h>
 #include <Arduino.h>
 
+#define BAUD_MIN 2400
+#define BAUD_MAX 115200
+
+
 // -------------------------------------------------------------------------- //
 // String Helpers
 // -------------------------------------------------------------------------- //
@@ -115,6 +119,36 @@ bool Esp8266<T>::findAnswer(char *answer) const
 */
 
 // -------------------------------------------------------------------------- //
+// Computational helpers
+// -------------------------------------------------------------------------- //
+static unsigned int nextBaud(unsigned int baud)
+{
+  if (baud == 38400)
+    baud = 57600;
+  else
+    baud *= 2;
+
+  if (baud > BAUD_MAX)
+    baud = BAUD_MAX;
+
+  return baud;
+}
+
+static bool isBaudRateSupported(unsigned int baud)
+{
+  unsigned baudCompare = BAUD_MIN;
+  while (baudCompare <= BAUD_MAX)
+  {
+    if (baud == baudCompare)
+      return true;
+
+    baudCompare = nextBaud(baudCompare);
+  };
+
+  return false;
+}
+
+// -------------------------------------------------------------------------- //
 // Public
 // -------------------------------------------------------------------------- //
 template <class T>
@@ -125,12 +159,51 @@ bool Esp8266<T>::isOk() const
 }
 
 template <class T>
-bool Esp8266<T>::setMultipleConnections(bool enable)
+unsigned int Esp8266<T>::configureBaud() const
 {
-  String cmd = buildSetCommand("CIPMUX", enable);
+  unsigned baud = BAUD_MIN;
+  while (baud <= BAUD_MAX)
+  {
+    // Set new rate to stream
+    serial.begin(baud);
+
+    // Check module reply, if it answers correctly return rate.
+    if (isOk())
+      return baud;
+
+    // Continue
+    baud = nextBaud(baud);
+  }
+
+  return 0;
+}
+
+template <class T>
+bool Esp8266<T>::setBaud(unsigned int baud) const
+{
+  if (!isBaudRateSupported(baud))
+    return false;
+
+  // Send command
+  String cmd = buildSetCommand(F("CIOBAUD"), baud);
   sendCommand(cmd);
 
-  return(wasCommandSuccessful());
+  // Change baud, send some stuff and delete possible wrong characters
+  serial.begin(baud);
+  isOk();
+  isOk();
+  flushIn();
+
+  return isOk();
+}
+
+template <class T>
+bool Esp8266<T>::setMultipleConnections(bool enable)
+{
+  String cmd = buildSetCommand(F("CIPMUX"), enable);
+  sendCommand(cmd);
+
+  return wasCommandSuccessful();
 }
 
 template <class T>
