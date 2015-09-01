@@ -24,7 +24,7 @@ test (basic_setMultipleConnections_succeeds)
 {
   esp.setMultipleConnections(false);
 
-  ret = esp.setMultipleConnections(true);
+  bool ret = esp.setMultipleConnections(true);
   assertTrue(ret)
 }
 
