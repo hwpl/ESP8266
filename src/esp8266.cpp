@@ -6,11 +6,6 @@
 // -------------------------------------------------------------------------- //
 // String Helpers
 // -------------------------------------------------------------------------- //
-static const bool isReplyOK(const String &reply)
-{
-  return reply.endsWith(F("OK\r\n"));
-}
-
 static const String substringFromBeginUntilOccurenceOfString(const String &string, const String &untilString)
 {
   int index = string.indexOf(untilString);
@@ -73,14 +68,55 @@ static const String buildSetCommand(const String &command, const Types &...param
   return prefix + buildParameterList(parameters...);
 }
 
+// Deprecated, we use now the methods of the stream class
+/*
+static bool findStringBeforeTerminator(Stream &stream, const char *search_str, const char terminator, const size_t bufflen = 64)
+{
+  // Check if we have a valid string to compare
+  if (!search_str || strlen(search_str) == 0)
+    return true;
+
+  // Create temporary buffer
+  char buffer[bufflen+1];
+
+  // Read stream until we detect the terminator
+  size_t read_len = stream.readBytesUntil(terminator, buffer, bufflen);
+
+  // Check if we have read bytes. Otherwise the timout occurs.
+  if (read_len == 0)
+    return false;
+
+  // Terminate the read string
+  buffer[read_len] = 0;
+
+  Serial.printf("String received : \"%s\"\n", buffer);
+
+  // Check if we can found the string
+  if (strstr(buffer, search_str) != NULL)
+    return true;
+
+  return false;
+}
+
+template <class T>
+bool Esp8266<T>::findAnswer(char *answer) const
+{
+  bool ret = false;
+  unsigned long until  = millis() + 5000;
+
+  do {
+    ret = findStringBeforeTerminator(serial, answer, '\n');
+    if (ret)
+      break;
+  } while (millis() <= until);
+
+  return ret;
+}
+*/
 
 // -------------------------------------------------------------------------- //
 // Public
 // -------------------------------------------------------------------------- //
-
-
-
-
 template <class T>
 bool Esp8266<T>::isOk() const
 {
@@ -94,28 +130,16 @@ bool Esp8266<T>::setMultipleConnections(bool enable)
   String cmd = buildSetCommand("CIPMUX", enable);
   sendCommand(cmd);
 
-  if (wasCommandSuccessful()) {
-    multipleConnections = enable;
-    return true;
-  }
-
-  return false;
+  return(wasCommandSuccessful());
 }
 
 template <class T>
-bool Esp8266<T>::getMultipleConnections() const
-{
-  return multipleConnections;
-}
-
-template <class T>
-bool Esp8266<T>::queryMultipleConnections()
+bool Esp8266<T>::getMultipleConnections(bool &multipleConnections) const
 {
   sendCommand(F("AT+CIPMUX?"));
 
-  String reply = readReply();
-
   // Get answer
+  String reply = readReply();
   String answer = getAnswerSubstring(reply);
   if (answer.length() == 0)
     return false;
@@ -138,9 +162,6 @@ bool Esp8266<T>::joinAccessPoint(const String &ssid, const String &passwd) const
 template <class T>
 bool Esp8266<T>::connect(unsigned channelId, const String &addr, unsigned port, ProtocolMode mode) const
 {
-  if (!multipleConnections)
-    return false;
-
   String modeString = (mode == TCP ? F("TCP") : F("UDP"));
   String cmd = buildSetCommand(F("CIPSTART"), String(channelId), quoteString(modeString), quoteString(addr), port);
   sendCommand(cmd);
@@ -151,9 +172,6 @@ bool Esp8266<T>::connect(unsigned channelId, const String &addr, unsigned port, 
 template <class T>
 bool Esp8266<T>::disconnect(unsigned channelId) const
 {
-  if (!multipleConnections)
-    return false;
-
   String cmd = buildSetCommand(F("CIPCLOSE"), channelId);
   sendCommand(cmd);
 
@@ -163,51 +181,18 @@ bool Esp8266<T>::disconnect(unsigned channelId) const
 template <class T>
 bool Esp8266<T>::send(unsigned channelId, const char *bytes, const unsigned length) const
 {
-  if (!multipleConnections) {
-    // return false;
-  }
-
-  // Send  "send" command
   String cmd = buildSetCommand(F("CIPSEND"), String(channelId), length);
   sendCommand(cmd);
 
   // Is module ready to get data?
-  String reply = readReply();
-  if(!reply.endsWith(F("OK\r\n> ")))
+  if (!wasCommandSuccessful())
     return false;
 
   // Write data
   serial.write(bytes, length);
+  flushOut();
 
-  // Get answer
-  for (unsigned i = 0; i < 3; i++)
-  {
-    // Create temporary buffer
-    const unsigned bufflen = 64;
-    char buffer[bufflen+1];
-
-    // Read console until we detect the newline character
-    unsigned int len = serial.readBytesUntil(bufflen, buffer, '\n');
-    // Check if we have an answer
-    if (len == 0)
-      return false;
-
-    // Terminate string
-    buffer[len] = 0;
-
-    // Serial.printf("Send string received : \"%s\"\n", buffer);
-
-    // Check if we got an OK
-    if (strstr(buffer, "OK") != NULL)
-      return true;
-
-    // Check if we got an ERROR
-    if (strstr(buffer, "ERROR") != NULL)
-      return false;
-  }
-
-  // Return false after 3 tries (timeouts etc.)
-  return false;
+  return wasCommandSuccessful();
 }
 
 // -------------------------------------------------------------------------- //
@@ -216,14 +201,14 @@ bool Esp8266<T>::send(unsigned channelId, const char *bytes, const unsigned leng
 
 /**
  * Reads the reply of an AT-command.
+ *
  * @param timout The maximum time to wait to fill the reply string.
- * return The reply of the command.
+ * return The string representation of the reply.
  */
 template <class T>
-const String Esp8266<T>::readReply(unsigned timeout) const
+const String Esp8266<T>::readReply(unsigned long timeout) const
 {
-  // Flush a sending buffer.
-  // flushOut();
+  // TODO: reimplement with finer timeout control.
 
   if (timeout == DEFAULT_TIMEOUT)
     return serial.readString();
@@ -235,25 +220,50 @@ const String Esp8266<T>::readReply(unsigned timeout) const
 }
 
 /**
+ * Scans the stream for the given AT answer.
+ *
+ * @note The method doesn't create a string. It just reacts on the terminal
+ * substring '\r\n' of an AT command and scans the string before it.
+ *
+ * @parameter answer The answer to search befor the
+ * @paramter timeout The absolute timeout to wait for the answer.
+ * @return True if the answer string was found in the reply, false otherwise.
+ */
+template <class T>
+bool Esp8266<T>::findAnswer(char *answer, unsigned long timeout) const
+{
+  unsigned long until = millis() + timeout;
+
+  // Read until answer was parsed or timout occurs.
+  do {
+    if (serial.findUntil(answer, "\r\n"))
+      return true;
+  } while (millis() <= until);
+
+  return false;
+}
+
+/**
  * Checks if the answer of an AT-command was "OK".
+ *
  * @param timout The maximum time to wait for the answer.
  * @return Returns "true" if the AT command was successful.
  */
-template <class T>
-bool Esp8266<T>::wasCommandSuccessful(unsigned timeout) const
-{
-  return isReplyOK(readReply(timeout));
-}
+ template <class T>
+ bool Esp8266<T>::wasCommandSuccessful(unsigned long timeout) const
+ {
+   return findAnswer("OK", timeout);
+ }
 
 /// Sends an command with the tailing line feed of AT-commands
 template <class T>
 void Esp8266<T>::sendCommand(const String &command) const
 {
+  flushIn();
   serial.print(command);
   serial.print(F("\r\n"));
   flushOut();
 }
-
 
 /// Sets the timeout to read strings from the input stream
 template <class T>
@@ -285,8 +295,5 @@ void Esp8266<T>::flush() const
   flushOut();
   flushIn();
 }
-
-
-
 
 template class Esp8266<SoftwareSerial>;

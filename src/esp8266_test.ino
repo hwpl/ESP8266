@@ -1,63 +1,49 @@
 #include "esp8266.h"
 #include <SoftwareSerial.h>
 #include <ArduinoUnit.h>
+#include "HttpRequest.h"
 
-SoftwareSerial mySerial(3,2); // RX, TX
+SoftwareSerial mySerial(2,3); // RX, TX
 Esp8266<SoftwareSerial> esp(mySerial);
 
-/*
-test(isOk_succeeds)
+test(basic_isOk_succeeds)
 {
   bool ret = esp.isOk();
-
   assertTrue(ret);
 }
 
-test(isOk_withInvalidBaudSettingsFails)
+test(basic_isOk_withInvalidBaudSettingsFails)
 {
   mySerial.begin(115200);
   bool ret = esp.isOk();
   mySerial.begin(9600);
-
   assertFalse(ret);
 }
 
-test (setMultipleConnections_succeeds)
+test (basic_setMultipleConnections_succeeds)
 {
-  bool ret = esp.setMultipleConnections(false);
-  assertTrue(ret);
+  esp.setMultipleConnections(false);
 
   ret = esp.setMultipleConnections(true);
   assertTrue(ret)
 }
 
-test (getMultipleConnections_returnsCorrectResults)
+test (basic_getMultipleConnections_returnsCorrectly)
 {
+  esp.setMultipleConnections(false);
   esp.setMultipleConnections(true);
-  bool ret = esp.getMultipleConnections();
+
+  bool mux;
+  bool ret = esp.getMultipleConnections(mux);
   assertTrue(ret);
+  assertTrue(mux);
 }
 
-test (queryMultipleConnections_succeeds)
-{
-  bool ret = esp.queryMultipleConnections();
-  assertTrue(ret);
-}
-
-test (queryMultipleConnections_updatesInternals)
-{
-  // Set multiple connections without using the interface
-  esp.setMultipleConnections(0);
-  mySerial.print(F("AT+CIPMUX=1\r\n"));
-
-  esp.queryMultipleConnections();
-  bool mux = esp.getMultipleConnections();
-}
-
-test (joinAccessPoint_joinsCorrectly)
+test (ap_joinAccessPoint_joinsCorrectly)
 {
   skip();
   return;
+
   bool ret = esp.joinAccessPoint("ti_iot", "ti_iot42!");
   assertTrue (ret);
 }
@@ -83,23 +69,30 @@ test (connect_viaTCPWithoutMultipleConnectionsFails)
   esp.disconnect(1);
   assertFalse(ret);
 }
-*/
 
-test (send_ByteDataSucceeds)
+
+test (send_withGetSucceeds)
 {
-  esp.setMultipleConnections(true);
-  esp.disconnect(1);
-  esp.connect(1, "api.thingspeak.com", 80);
+  // Build request
+  HttpRequest req("/update");
+  req.addParameter("api_key", "SSZQ72F4VTZW43YS");
+  req.addParameter("field1", "1");
 
-  String data("GET /update?api_key=SSZQ72F4VTZW43YS&field1=1024\r\n\r\n");
-  bool ret = esp.send(1, data.c_str(), data.length());
+  // Set string
+  char reqStr[200];
+  req.get(reqStr);
+
+  // Connect server
+  esp.setMultipleConnections(true);
+  esp.connect(1, "api.thingspeak.com", 80);
+  bool ret = esp.send(1, reqStr, strlen(reqStr));
+
+  // String retString = mySerial.readString();
+  // Serial.printf("Ret string : \"%s\"", retString.c_str());
 
   assertTrue(ret);
-
-  mySerial.setTimeout(5000);
-  String retString = mySerial.readString();
-  Serial.printf("Ret string : \"%s\"", retString.c_str());
 }
+
 
 void setup()
 {

@@ -1,12 +1,15 @@
+#ifndef __ESP8266_H__
+#define __ESP8266_H__
+
 #include <Stream.h>
 
 template <class T>
 class Esp8266
 {
 public:
-  static const unsigned int DEFAULT_TIMEOUT =  1000;  ///< Timeout to send simple commands to the module, e.g. isOK()
-  static const unsigned int MEDIUM_TIMEOUT  =  5000;  ///< Timemout for medium lasting commands, e.g. connect()
-  static const unsigned int LONG_TIMEOUT    = 10000;  ///< Timeout for long commenads, e.g. joinAccessPoint()
+  static const unsigned long DEFAULT_TIMEOUT =  1000;  ///< Timeout to send simple commands to the module, e.g. isOK()
+  static const unsigned long MEDIUM_TIMEOUT  =  5000;  ///< Timemout for medium lasting commands, e.g. connect()
+  static const unsigned long LONG_TIMEOUT    = 10000;  ///< Timeout for long commenads, e.g. joinAccessPoint()
 
   typedef enum {
     TCP,            ///< Transmission control protocol for stateful communications (default)
@@ -37,22 +40,16 @@ public:
   /**
    * Returns the currently set multiple connection state.
    *
-   * @note: No command issued. Use updateMultipleConnection to query device.
-   * @return The multiple connection state. "true" = enabled, "false" = disabled.
-   */
-  bool getMultipleConnections() const;
-
-  /**
-   * Queries the multiple connection state.
-   *
    * @note: Command: AT+CIPMUX?
-   * @note: The internal mux state is updated.
+   * @param multipleConnections Reference to store the state. "true" = enabled, "false" = disabled.
    * @return Returns "true" if the command was successful, "false" otherwise.
    */
-   bool queryMultipleConnections();
+  bool getMultipleConnections(bool &multipleConnections) const;
 
    /**
-    * Joins the given access point
+    * Joins the given access point.
+    *
+    * @note: Command: AT+CWJAP=<ssid>,<passwd>
     * @param ssid The ssid of the access point to join.
     * @param passwd The password to join the network.
     * @return Returns "true" if the command was successful, "false" otherwise.
@@ -73,6 +70,8 @@ public:
 
    /**
     * Diconnects a channel to a server.
+    *
+    * @note Command: AT+CIPSTOP=<channelId>
     * @param channelId The channel to disconnect
     * @return Returns "true" if the command was successful, "false" otherwise.
     */
@@ -80,9 +79,11 @@ public:
 
    /**
     * Sends data over the connection channel to the server.
+    *
+    * @note Command: AT+CIPSEND=<id>,<length>\r\n ... <bytes>
     * @param channelId The channel to send the data.
-    * @bytes The buffer to send.
-    * @length The length of the buffer
+    * @param bytes The buffer to send.
+    * @param length The length of the buffer
     * @return Returns "true" if the command was successful, "false" otherwise.
     */
    bool send(unsigned channelId, const char *bytes, const unsigned length) const;
@@ -90,17 +91,18 @@ public:
 private:
   // Variables
   T &serial;
-  bool multipleConnections;
 
   // Command Helpers
   void sendCommand(const String &command) const;
-  const String readReply(unsigned int timeout = DEFAULT_TIMEOUT) const;
-  bool wasCommandSuccessful(unsigned int timeout = DEFAULT_TIMEOUT) const;
+  const String readReply(unsigned long timeout = DEFAULT_TIMEOUT) const;
+  bool findAnswer(char *anser, unsigned long timeout = DEFAULT_TIMEOUT) const;
+  bool wasCommandSuccessful(unsigned long timeout = DEFAULT_TIMEOUT) const;
 
   // Stream Helper
   void setTimeout(unsigned int timout) const;
   void flush() const;
   void flushIn() const;
   void flushOut() const;
-
 };
+
+#endif // __ESP8266_H__
