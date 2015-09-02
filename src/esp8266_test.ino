@@ -1,11 +1,14 @@
-#include "esp8266.h"
 #include <SoftwareSerial.h>
 #include <ArduinoUnit.h>
+
 #include "HttpRequest.h"
+#include "esp8266.h"
+#include "DataParser.h"
 
 SoftwareSerial mySerial(2,3); // RX, TX
 Esp8266<SoftwareSerial> esp(mySerial);
 
+/*
 test(basic_isOk_succeeds)
 {
   bool ret = esp.isOk();
@@ -32,7 +35,6 @@ test(basic_setBaud_succeeds)
 
   assertTrue(ret);
 }
-
 
 test(basic_isOk_withInvalidBaudSettingsFails)
 {
@@ -114,14 +116,30 @@ test (send_withGetSucceeds)
 
   assertTrue(ret);
 }
+*/
 
+test (parser_parse_acceptsData)
+{
+  FakeStreamBuffer stream;
+  DataParser parser(stream);
+  stream.nextBytes("\r\n+IPD,1,123:<Payload xyz>");
+
+  bool ret = parser.parse();
+  unsigned int channelId = parser.getChannelId();
+  unsigned int payloadLength = parser.getPayloadLength();
+
+  assertTrue(ret);
+  assertEqual(channelId, 1);
+  assertEqual(payloadLength, 123);
+  assertEqual(stream.read(), '<');
+}
 
 void setup()
 {
   Serial.begin(9600);
 
-  esp.configureBaud();
-  esp.setBaud(9600);
+  // esp.configureBaud();
+  // esp.setBaud(9600);
 }
 
 void loop()
