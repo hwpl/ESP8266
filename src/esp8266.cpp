@@ -72,7 +72,7 @@ static const String buildSetCommand(const String &command, const Types &...param
   return prefix + buildParameterList(parameters...);
 }
 
-// Deprecated, we use now the methods of the stream class
+// Deprecated, now we use the methods of the stream class, like findUntil() etc.
 /*
 static bool findStringBeforeTerminator(Stream &stream, const char *search_str, const char terminator, const size_t bufflen = 64)
 {
