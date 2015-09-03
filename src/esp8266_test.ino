@@ -1,9 +1,7 @@
 #include <SoftwareSerial.h>
 #include <ArduinoUnit.h>
-
-#include "HttpRequest.h"
-#include "FakeSerial.h"
-#include "esp8266.h"
+#include <HttpRequest.h>
+#include <Esp8266.h>
 
 SoftwareSerial mySerial(2,3); // RX, TX
 Esp8266<SoftwareSerial> esp(mySerial);
