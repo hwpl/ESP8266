@@ -1,11 +1,7 @@
-#include "esp8266.h"
-#include <String.h>
-#include <SoftwareSerial.h>
-#include <Arduino.h>
+#ifdef __ESP8266_H__
 
 #define BAUD_MIN 2400
 #define BAUD_MAX 115200
-
 
 // -------------------------------------------------------------------------- //
 // String Helpers
@@ -270,26 +266,48 @@ unsigned int Esp8266<T>::receive(unsigned char channelId, char *buffer, unsigned
   if (!buffer || bufferSize == 0)
     return 0;
 
-  // Parse the receive buffer, if we do not have parsed the receive buffer.
-  if (_receivedBytes == 0)
-  {
-    if (_parser.parse()) {
-      _receivedBytes = _parser.getPayloadLength();
-      _receivedChannelID = _parser.getChannelId();
-    }
-  }
+  // Parse a possible answer of the module
+  parseIPData();
 
-  // Check if we have received a byte and if the byte was on the correct channel
+  // If we are here, we work with previously received IP data or
+  // with the parsed IP data above.
+  // Check data
   if (_receivedBytes == 0 || channelId != _receivedChannelID)
     return 0;
 
-  return 1;
+  // Reads the minimum allowed count of bytes and writes it to the receiving buffer
+  unsigned int count = min(bufferSize, _receivedBytes);
+  count = _serial.readBytes(buffer, count);
+
+  // Update the remaining bytes
+  if (_receivedBytes >= count)
+    _receivedBytes -= count;
+  else
+  {
+    // Should not happen
+    _receivedBytes = count = 0;
+    Serial.print("Here 2");
+  }
+
+  return count;
 }
 
 // -------------------------------------------------------------------------- //
 // Private
 // -------------------------------------------------------------------------- //
+// Byte-wise parses the answer of the module to identify requested IP data (+IPD)
+template <class T>
+void Esp8266<T>::parseIPData()
+{
+ if (_receivedBytes != 0)
+   return;
 
+ if (!_parser.parse())
+  return;
+
+  _receivedBytes = _parser.getPayloadLength();
+  _receivedChannelID = _parser.getChannelId();
+}
 
 /**
  * Reads the reply of an AT-command.
@@ -388,4 +406,7 @@ void Esp8266<T>::flush() const
   flushIn();
 }
 
-template class Esp8266<SoftwareSerial>;
+#undef BAUD_MIN
+#undef BAUD_MAX
+
+#endif

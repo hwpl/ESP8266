@@ -124,11 +124,17 @@ private:
   bool findAnswer(char *anser, unsigned long timeout = DEFAULT_TIMEOUT) const;
   bool wasCommandSuccessful(unsigned long timeout = DEFAULT_TIMEOUT) const;
 
+  // Parser Helpers
+  void parseIPData();
+
   // Stream Helper
   void setTimeout(unsigned int timout) const;
   void flush() const;
   void flushIn() const;
   void flushOut() const;
 };
+
+// Provide template definition
+#include "esp8266.cpp"
 
 #endif // __ESP8266_H__

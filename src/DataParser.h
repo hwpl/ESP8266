@@ -203,7 +203,7 @@ private:
     const unsigned long until = millis() + 1000;
     while( !_stream.available() && millis() <= until)
       ;
-      
+
     symbol = _stream.read();
   }
 };

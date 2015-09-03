@@ -2,14 +2,19 @@
 #include <ArduinoUnit.h>
 
 #include "HttpRequest.h"
+#include "FakeSerial.h"
 #include "esp8266.h"
 
 SoftwareSerial mySerial(2,3); // RX, TX
 Esp8266<SoftwareSerial> esp(mySerial);
 
+// template class Esp8266<FakeBuffer>;
+
 // -------------------------------------------------------------------------- //
 // Helper
 // -------------------------------------------------------------------------- //
+
+// Send a request on a channel to the thingspeak api.
 bool connectAndSendGetRequest(unsigned char channelId)
 {
   // Build HTTP request
@@ -128,6 +133,7 @@ test (send_withGetSucceeds)
   bool ret = connectAndSendGetRequest(1);
   assertTrue(ret);
 }
+
 */
 
 test (receive_correctlyReceivesOneSingleAnswer)
@@ -142,7 +148,7 @@ test (receive_correctlyReceivesOneSingleAnswer)
   assertMore(length, 0);
 }
 
-test (receive_doesNotReciveWithWrongBufferPArameters)
+test (receive_doesNotReceiveWithWrongBufferPArameters)
 {
   char buffer;
   assertTrue(connectAndSendGetRequest(1));
@@ -166,6 +172,34 @@ test (receive_doesNotReceiveOnTheWrongChannelId)
   assertEqual(len, 0);
 }
 
+test (receive_correctlyReceivesString)
+{
+  assertTrue(connectAndSendGetRequest(1));
+  char buffer[20];
+  buffer[0] = 0;
+
+  esp.receive(1, buffer, sizeof(buffer));
+
+  assertMore(atoi(buffer), 0);
+}
+
+/*
+test (receive_correctlyReceivesFakeString)
+{
+  FakeSerial fakeSerial;
+  Esp8266<FakeSerial> myEsp(fakeSerial);
+  fakeSerial.nextBytes("+IPD,1,5:Hello");
+
+  char buffer[10];
+  buffer[0] = 0;
+  unsigned len = esp.receive(1, buffer, 10);
+
+  Serial.printf("ret buffer : %s", buffer);
+
+  // Check if the two strings are equal
+  assertEqual(strcmp(buffer, "Hello") , 0);
+}
+*/
 
 // -------------------------------------------------------------------------- //
 // Main
