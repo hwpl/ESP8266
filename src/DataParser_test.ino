@@ -1,11 +1,12 @@
 #include "ArduinoUnit.h"
 #include "DataParser.h"
 
+/*
 test (parser_parse_acceptsCorrectHeader)
 {
   FakeStreamBuffer stream;
   DataParser parser(stream);
-  stream.nextBytes("+IPD,1,5:...Data...");
+  stream.nextBytes("\r\n+IPD,1,3:1001,CLOSED\r\n");
 
   bool ret = parser.parse();
 
@@ -111,3 +112,4 @@ test (parser_parse_leavesFirstByteAfterHeaderOnStream)
   assertTrue(ret);
   assertEqual(stream.read(), 'F');
 }
+*/

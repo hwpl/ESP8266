@@ -2,6 +2,7 @@
 #define __ESP8266_H__
 
 #include <Stream.h>
+#include "DataParser.h"
 
 template <class T>
 class Esp8266
@@ -16,7 +17,8 @@ public:
     UDP             ///< User datagram protocol for connection-less communications
   } ProtocolMode;
 
-  Esp8266(T &serial) : serial(serial) {
+  Esp8266(T &serial) : _serial(serial), _parser(serial)
+  {
     setTimeout(DEFAULT_TIMEOUT);
   };
 
@@ -36,8 +38,7 @@ public:
    * @note: The detected rate is also set to the serial stream.
    * @return The found BAUD rate of the module. 0 if the module does not answer.
    */
-   unsigned int configureBaud() const;
-
+   unsigned long configureBaud() const;
 
    /**
     * Changes the baud rate of the pair: connection and module.
@@ -46,7 +47,7 @@ public:
     *   supported: 2400, 4800, 9600, 19200, 38400, 57600 and 115200.
     * @return True if the command was successful
     */
-   bool setBaud(unsigned int baud) const;
+   bool setBaud(unsigned long baud) const;
 
   /**
    * Sets the multiple connection support of the module.
@@ -106,11 +107,16 @@ public:
     * @param length The length of the buffer
     * @return Returns "true" if the command was successful, "false" otherwise.
     */
-   bool send(unsigned channelId, const char *bytes, const unsigned length) const;
+   bool send(unsigned char channelId, const char *bytes, const unsigned length) const;
+
+   unsigned int receive(unsigned char channelId, char *buffer, unsigned int bufferSize);
 
 private:
   // Variables
-  T &serial;
+  T &_serial;
+  DataParser _parser;
+  unsigned int _receivedBytes;
+  unsigned char _receivedChannelID;
 
   // Command Helpers
   void sendCommand(const String &command) const;

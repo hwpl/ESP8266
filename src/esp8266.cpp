@@ -36,11 +36,6 @@ static const String getAnswerSubstring(const String &string)
   return answer;
 }
 
-static const String buildParameterList()
-{
-  return String();
-}
-
 static const String buildParameterList(const String &param)
 {
   return param;
@@ -121,7 +116,7 @@ bool Esp8266<T>::findAnswer(char *answer) const
 // -------------------------------------------------------------------------- //
 // Computational helpers
 // -------------------------------------------------------------------------- //
-static unsigned int nextBaud(unsigned int baud)
+static unsigned long nextBaud(unsigned long baud)
 {
   if (baud == 38400)
     baud = 57600;
@@ -134,9 +129,9 @@ static unsigned int nextBaud(unsigned int baud)
   return baud;
 }
 
-static bool isBaudRateSupported(unsigned int baud)
+static bool isBaudRateSupported(unsigned long baud)
 {
-  unsigned baudCompare = BAUD_MIN;
+  unsigned long baudCompare = BAUD_MIN;
   while (baudCompare <= BAUD_MAX)
   {
     if (baud == baudCompare)
@@ -159,13 +154,13 @@ bool Esp8266<T>::isOk() const
 }
 
 template <class T>
-unsigned int Esp8266<T>::configureBaud() const
+unsigned long Esp8266<T>::configureBaud() const
 {
-  unsigned baud = BAUD_MIN;
+  unsigned long baud = BAUD_MIN;
   while (baud <= BAUD_MAX)
   {
     // Set new rate to stream
-    serial.begin(baud);
+    _serial.begin(baud);
 
     // Check module reply, if it answers correctly return rate.
     if (isOk())
@@ -179,7 +174,7 @@ unsigned int Esp8266<T>::configureBaud() const
 }
 
 template <class T>
-bool Esp8266<T>::setBaud(unsigned int baud) const
+bool Esp8266<T>::setBaud(unsigned long baud) const
 {
   if (!isBaudRateSupported(baud))
     return false;
@@ -189,7 +184,7 @@ bool Esp8266<T>::setBaud(unsigned int baud) const
   sendCommand(cmd);
 
   // Change baud, send some stuff and delete possible wrong characters
-  serial.begin(baud);
+  _serial.begin(baud);
   isOk();
   isOk();
   flushIn();
@@ -237,6 +232,7 @@ bool Esp8266<T>::connect(unsigned channelId, const String &addr, unsigned port, 
 {
   String modeString = (mode == TCP ? F("TCP") : F("UDP"));
   String cmd = buildSetCommand(F("CIPSTART"), String(channelId), quoteString(modeString), quoteString(addr), port);
+
   sendCommand(cmd);
 
   return wasCommandSuccessful(MEDIUM_TIMEOUT);
@@ -252,7 +248,7 @@ bool Esp8266<T>::disconnect(unsigned channelId) const
 }
 
 template <class T>
-bool Esp8266<T>::send(unsigned channelId, const char *bytes, const unsigned length) const
+bool Esp8266<T>::send(unsigned char channelId, const char *bytes, const unsigned length) const
 {
   String cmd = buildSetCommand(F("CIPSEND"), String(channelId), length);
   sendCommand(cmd);
@@ -262,15 +258,38 @@ bool Esp8266<T>::send(unsigned channelId, const char *bytes, const unsigned leng
     return false;
 
   // Write data
-  serial.write(bytes, length);
+  _serial.write(bytes, length);
   flushOut();
 
   return wasCommandSuccessful();
 }
 
+template <class T>
+unsigned int Esp8266<T>::receive(unsigned char channelId, char *buffer, unsigned int bufferSize)
+{
+  if (!buffer || bufferSize == 0)
+    return 0;
+
+  // Parse the receive buffer, if we do not have parsed the receive buffer.
+  if (_receivedBytes == 0)
+  {
+    if (_parser.parse()) {
+      _receivedBytes = _parser.getPayloadLength();
+      _receivedChannelID = _parser.getChannelId();
+    }
+  }
+
+  // Check if we have received a byte and if the byte was on the correct channel
+  if (_receivedBytes == 0 || channelId != _receivedChannelID)
+    return 0;
+
+  return 1;
+}
+
 // -------------------------------------------------------------------------- //
 // Private
 // -------------------------------------------------------------------------- //
+
 
 /**
  * Reads the reply of an AT-command.
@@ -284,10 +303,10 @@ const String Esp8266<T>::readReply(unsigned long timeout) const
   // TODO: reimplement with finer timeout control.
 
   if (timeout == DEFAULT_TIMEOUT)
-    return serial.readString();
+    return _serial.readString();
 
   setTimeout(timeout);
-  String retString = serial.readString();
+  String retString = _serial.readString();
   setTimeout(DEFAULT_TIMEOUT);
   return retString;
 }
@@ -309,7 +328,7 @@ bool Esp8266<T>::findAnswer(char *answer, unsigned long timeout) const
 
   // Read until answer was parsed or timout occurs.
   do {
-    if (serial.findUntil(answer, "\r\n"))
+    if (_serial.findUntil(answer, "\r\n"))
       return true;
   } while (millis() <= until);
 
@@ -333,8 +352,8 @@ template <class T>
 void Esp8266<T>::sendCommand(const String &command) const
 {
   flushIn();
-  serial.print(command);
-  serial.print(F("\r\n"));
+  _serial.print(command);
+  _serial.print(F("\r\n"));
   flushOut();
 }
 
@@ -342,22 +361,22 @@ void Esp8266<T>::sendCommand(const String &command) const
 template <class T>
 void Esp8266<T>::setTimeout(unsigned timeout) const
 {
-  serial.setTimeout(timeout);
+  _serial.setTimeout(timeout);
 }
 
 /// Cleans the output stream
 template <class T>
 void Esp8266<T>::flushOut() const
 {
-  serial.flush();
+  _serial.flush();
 }
 
 /// Clean the input stream
 template <class T>
 void Esp8266<T>::flushIn() const
 {
-  while (serial.available()) {
-    serial.read();
+  while (_serial.available()) {
+    _serial.read();
   }
 }
 

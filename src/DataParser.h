@@ -1,3 +1,6 @@
+#ifndef __DATAPARSER_H__
+#define __DATAPARSER_H__
+
 #include <Arduino.h>
 #include <Stream.h>
 
@@ -9,7 +12,7 @@ public:
   static const char COMMA = ',';
   static const char COLON = ':';
 
-  DataParser (Stream &stream) : stream (stream) {
+  DataParser (Stream &stream) : _stream(stream) {
     reset();
   }
 
@@ -47,7 +50,7 @@ public:
   }
 
 private:
-  Stream &stream;
+  Stream &_stream;
   char symbol;
   unsigned int channelId;
   unsigned int payloadLength;
@@ -189,14 +192,20 @@ private:
   bool expect(const char s)
   {
     if (accept(s))
-    return true;
+      return true;
 
-    Serial.print("expect: unexpected symbol");
     return false;
   }
 
-  void nextsym() {
-    symbol = stream.read();
+  void nextsym()
+  {
+    // Wait until a byte is available or the timout occurs
+    const unsigned long until = millis() + 1000;
+    while( !_stream.available() && millis() <= until)
+      ;
+      
+    symbol = _stream.read();
   }
-
 };
+
+#endif

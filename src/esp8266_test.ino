@@ -7,6 +7,36 @@
 SoftwareSerial mySerial(2,3); // RX, TX
 Esp8266<SoftwareSerial> esp(mySerial);
 
+// -------------------------------------------------------------------------- //
+// Helper
+// -------------------------------------------------------------------------- //
+bool connectAndSendGetRequest(unsigned char channelId)
+{
+  // Build HTTP request
+  HttpRequest req(F("/update"));
+  req.addParameter(F("api_key"), F("SSZQ72F4VTZW43YS"));
+  req.addParameter(F("field1"), F("20"));
+
+  // Build get request string
+  unsigned bufferSize = 64;
+  char buffer[bufferSize];
+  req.get(buffer);
+
+  // Connect to server and send data
+  esp.setMultipleConnections(true);
+  esp.disconnect(channelId);
+  bool ret = esp.connect(channelId, F("api.thingspeak.com"), 80);
+
+  // Send request
+  if (ret)
+    ret = esp.send(channelId, buffer, strlen(buffer));
+
+  return ret;
+}
+
+// -------------------------------------------------------------------------- //
+// Tests
+// -------------------------------------------------------------------------- //
 /*
 test(basic_isOk_succeeds)
 {
@@ -67,7 +97,7 @@ test (ap_joinAccessPoint_joinsCorrectly)
   skip();
   return;
 
-  bool ret = esp.joinAccessPoint("ti_iot", "ti_iot42!");
+  bool ret = esp.joinAccessPoint(F("ti_iot"), F("ti_iot42!"));
   assertTrue (ret);
 }
 
@@ -76,7 +106,7 @@ test (connect_viaTCPWithMultipleConnectionSucceeds)
   esp.setMultipleConnections(true);
   esp.disconnect(1);
 
-  bool ret = esp.connect(1, "google.de", 80);
+  bool ret = esp.connect(1, F("google.de"), 80);
 
   esp.disconnect(1);
   assertTrue(ret);
@@ -87,49 +117,68 @@ test (connect_viaTCPWithoutMultipleConnectionsFails)
   esp.setMultipleConnections(false);
   esp.disconnect(1);
 
-  bool ret = esp.connect(1, "google.de", 80);
+  bool ret = esp.connect(1, F("google.de"), 80);
 
   esp.disconnect(1);
   assertFalse(ret);
 }
 
-
 test (send_withGetSucceeds)
 {
-  // Build request
-  HttpRequest req("/update");
-  req.addParameter("api_key", "SSZQ72F4VTZW43YS");
-  req.addParameter("field1", "1");
-
-  // Set string
-  char reqStr[200];
-  req.get(reqStr);
-
-  // Connect server
-  esp.setMultipleConnections(true);
-  esp.connect(1, "api.thingspeak.com", 80);
-  bool ret = esp.send(1, reqStr, strlen(reqStr));
-
-  // String retString = mySerial.readString();
-  // Serial.printf("Ret string : \"%s\"", retString.c_str());
-
+  bool ret = connectAndSendGetRequest(1);
   assertTrue(ret);
 }
 */
 
+test (receive_correctlyReceivesOneSingleAnswer)
+{
+  const unsigned bufferSize = 20;
+  char buffer[bufferSize];
+  assertTrue(connectAndSendGetRequest(1));
+
+  unsigned int length = esp.receive(1, buffer, bufferSize);
+
+  // Check for an non empty answer
+  assertMore(length, 0);
+}
+
+test (receive_doesNotReciveWithWrongBufferPArameters)
+{
+  char buffer;
+  assertTrue(connectAndSendGetRequest(1));
+
+  // Receive data
+  unsigned len1 = esp.receive(1, NULL, 1);
+  unsigned len2 = esp.receive(1, &buffer, 0);
+
+  // Check for an empty answer
+  assertEqual(len1, 0);
+  assertEqual(len2, 0);
+}
+
+test (receive_doesNotReceiveOnTheWrongChannelId)
+{
+  char buffer;
+  assertTrue(connectAndSendGetRequest(1));
+
+  unsigned len = esp.receive(2, &buffer, sizeof(buffer));
+
+  assertEqual(len, 0);
+}
 
 
+// -------------------------------------------------------------------------- //
+// Main
+// -------------------------------------------------------------------------- //
 void setup()
 {
   Serial.begin(9600);
 
-  // esp.configureBaud();
-  // esp.setBaud(9600);
+  esp.configureBaud();
+  esp.setBaud(9600);
 }
 
 void loop()
 {
-
   Test::run();
-  // esp.queryMultipleConnections();
 }
