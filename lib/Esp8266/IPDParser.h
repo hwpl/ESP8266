@@ -1,3 +1,29 @@
+// The MIT License (MIT)
+//
+// Copyright (c) 2015 Joern Hoffmann
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
+// Joern Hoffmann, 2015
+// University Leipzig    jhoffmann@informatik.uni-leipzig.de
+// xceeth Technologies   j.hoffmann@xceeth.com
+
 #ifndef __IPDPARSER_H__
 #define __IPDPARSER_H__
 
@@ -49,7 +75,7 @@ public:
    * @param buffer The buffer to be filled with a stream of payload bytes.
    * @param bufferSize The size of the buffer. This is also the maximum amount
    * that can be read from the stream.
-   * @return The amount of copied bytes into the buffer. 
+   * @return The amount of copied bytes into the buffer.
    */
   unsigned int readPayload(char *buffer, unsigned int bufferSize);
 

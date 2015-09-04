@@ -1,5 +1,30 @@
-#ifdef __ESP8266_H__
+// The MIT License (MIT)
+//
+// Copyright (c) 2015 Joern Hoffmann
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
+// Joern Hoffmann, 2015
+// University Leipzig    jhoffmann@informatik.uni-leipzig.de
+// xceeth Technologies   j.hoffmann@xceeth.com
 
+#ifdef __ESP8266_H__
 #include "TimeHelper.h"
 
 #define BAUD_MIN 2400
@@ -64,52 +89,6 @@ static const String buildSetCommand(const String &command, const Types &...param
   prefix += F("=");
   return prefix + buildParameterList(parameters...);
 }
-
-// Deprecated, now we use the methods of the stream class, like findUntil() etc.
-/*
-static bool findStringBeforeTerminator(Stream &stream, const char *search_str, const char terminator, const size_t bufflen = 64)
-{
-  // Check if we have a valid string to compare
-  if (!search_str || strlen(search_str) == 0)
-    return true;
-
-  // Create temporary buffer
-  char buffer[bufflen+1];
-
-  // Read stream until we detect the terminator
-  size_t read_len = stream.readBytesUntil(terminator, buffer, bufflen);
-
-  // Check if we have read bytes. Otherwise the timout occurs.
-  if (read_len == 0)
-    return false;
-
-  // Terminate the read string
-  buffer[read_len] = 0;
-
-  Serial.printf("String received : \"%s\"\n", buffer);
-
-  // Check if we can found the string
-  if (strstr(buffer, search_str) != NULL)
-    return true;
-
-  return false;
-}
-
-template <class T>
-bool Esp8266<T>::findAnswer(char *answer) const
-{
-  bool ret = false;
-  unsigned long until  = millis() + 5000;
-
-  do {
-    ret = findStringBeforeTerminator(serial, answer, '\n');
-    if (ret)
-      break;
-  } while (millis() <= until);
-
-  return ret;
-}
-*/
 
 // -------------------------------------------------------------------------- //
 // Computational helpers
