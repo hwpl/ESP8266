@@ -1,5 +1,7 @@
 #ifdef __ESP8266_H__
 
+#include "TimeHelper.h"
+
 #define BAUD_MIN 2400
 #define BAUD_MAX 115200
 
@@ -143,6 +145,11 @@ static bool isBaudRateSupported(unsigned long baud)
 // Public
 // -------------------------------------------------------------------------- //
 template <class T>
+Esp8266<T>::Esp8266(T &serial) : _serial(serial) {
+  setTimeout(DEFAULT_TIMEOUT);
+};
+
+template <class T>
 bool Esp8266<T>::isOk() const
 {
   sendCommand(F("AT"));
@@ -260,55 +267,55 @@ bool Esp8266<T>::send(unsigned char channelId, const char *bytes, const unsigned
   return wasCommandSuccessful();
 }
 
-template <class T>
-unsigned int Esp8266<T>::receive(unsigned char channelId, char *buffer, unsigned int bufferSize)
-{
-  if (!buffer || bufferSize == 0)
-    return 0;
-
-  // Parse a possible answer of the module
-  parseIPData();
-
-  // If we are here, we work with previously received IP data or
-  // with the parsed IP data above.
-  // Check data
-  if (_receivedBytes == 0 || channelId != _receivedChannelID)
-    return 0;
-
-  // Reads the minimum allowed count of bytes and writes it to the receiving buffer
-  unsigned int count = min(bufferSize, _receivedBytes);
-  count = _serial.readBytes(buffer, count);
-
-  // Update the remaining bytes
-  if (_receivedBytes >= count)
-    _receivedBytes -= count;
-  else
-  {
-    // Should not happen
-    _receivedBytes = count = 0;
-    Serial.print("Here 2");
-  }
-
-  return count;
-}
-
 // -------------------------------------------------------------------------- //
 // Private
 // -------------------------------------------------------------------------- //
-// Byte-wise parses the answer of the module to identify requested IP data (+IPD)
+// -------------------------------------------------------------------------- //
+// Serial
+// -------------------------------------------------------------------------- //
+/**
+ * Sets the timeout to read strings from the input stream
+ */
 template <class T>
-void Esp8266<T>::parseIPData()
+void Esp8266<T>::setTimeout(unsigned timeout) const
 {
- if (_receivedBytes != 0)
-   return;
-
- if (!_parser.parse())
-  return;
-
-  _receivedBytes = _parser.getPayloadLength();
-  _receivedChannelID = _parser.getChannelId();
+  _serial.setTimeout(timeout);
 }
 
+/**
+ * Cleans the output stream.
+ */
+template <class T>
+void Esp8266<T>::flushOut() const
+{
+  _serial.flush();
+}
+
+/**
+ * Clean the input stream
+ */
+template <class T>
+void Esp8266<T>::flushIn() const
+{
+  // Read all characters
+  while (_serial.available()) {
+    _serial.read();
+  }
+}
+
+/**
+ * Cleans the input and output buffer of the stream.
+ */
+template <class T>
+void Esp8266<T>::flush() const
+{
+  flushOut();
+  flushIn();
+}
+
+// -------------------------------------------------------------------------- //
+// Commands
+// -------------------------------------------------------------------------- //
 /**
  * Reads the reply of an AT-command.
  *
@@ -319,7 +326,6 @@ template <class T>
 const String Esp8266<T>::readReply(unsigned long timeout) const
 {
   // TODO: reimplement with finer timeout control.
-
   if (timeout == DEFAULT_TIMEOUT)
     return _serial.readString();
 
@@ -373,37 +379,6 @@ void Esp8266<T>::sendCommand(const String &command) const
   _serial.print(command);
   _serial.print(F("\r\n"));
   flushOut();
-}
-
-/// Sets the timeout to read strings from the input stream
-template <class T>
-void Esp8266<T>::setTimeout(unsigned timeout) const
-{
-  _serial.setTimeout(timeout);
-}
-
-/// Cleans the output stream
-template <class T>
-void Esp8266<T>::flushOut() const
-{
-  _serial.flush();
-}
-
-/// Clean the input stream
-template <class T>
-void Esp8266<T>::flushIn() const
-{
-  while (_serial.available()) {
-    _serial.read();
-  }
-}
-
-/// Cleans the input and output buffer of the stream
-template <class T>
-void Esp8266<T>::flush() const
-{
-  flushOut();
-  flushIn();
 }
 
 #undef BAUD_MIN

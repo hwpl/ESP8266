@@ -1,7 +1,9 @@
 #include <SoftwareSerial.h>
 #include <ArduinoUnit.h>
+
 #include <HttpRequest.h>
 #include <Esp8266.h>
+#include <IPDParser.h>
 
 SoftwareSerial mySerial(2,3); // RX, TX
 Esp8266<SoftwareSerial> esp(mySerial);
@@ -132,8 +134,6 @@ test (send_withGetSucceeds)
   assertTrue(ret);
 }
 
-*/
-
 test (receive_correctlyReceivesOneSingleAnswer)
 {
   const unsigned bufferSize = 20;
@@ -169,14 +169,20 @@ test (receive_doesNotReceiveOnTheWrongChannelId)
 
   assertEqual(len, 0);
 }
+*/
 
 test (receive_correctlyReceivesString)
 {
   assertTrue(connectAndSendGetRequest(1));
+
+  // Parse received ip data until the payload appears.
+  IPDParser ipd(mySerial);
+  assertTrue(ipd.parse());
+
+  // Receive string
   char buffer[20];
   buffer[0] = 0;
-
-  esp.receive(1, buffer, sizeof(buffer));
+  ipd.readPayload(buffer, 20);
 
   assertMore(atoi(buffer), 0);
 }

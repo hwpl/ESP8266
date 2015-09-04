@@ -2,7 +2,6 @@
 #define __ESP8266_H__
 
 #include <Stream.h>
-#include "DataParser.h"
 
 template <class T>
 class Esp8266
@@ -17,10 +16,11 @@ public:
     UDP             ///< User datagram protocol for connection-less communications
   } ProtocolMode;
 
-  Esp8266(T &serial) : _serial(serial), _parser(serial)
-  {
-    setTimeout(DEFAULT_TIMEOUT);
-  };
+  /**
+   * Constructs an object to handle an ESP8266 module.
+   * @param serial The serial interface to which the module is connected.
+   */
+  Esp8266(T &serial);
 
   /**
    * Checks the communication with the module.
@@ -109,29 +109,24 @@ public:
     */
    bool send(unsigned char channelId, const char *bytes, const unsigned length) const;
 
+   /**
+    * Receives
+    */
    unsigned int receive(unsigned char channelId, char *buffer, unsigned int bufferSize);
 
 private:
-  // Variables
+  // Serial Interface
   T &_serial;
-  DataParser _parser;
-  unsigned int _receivedBytes;
-  unsigned char _receivedChannelID;
-
-  // Command Helpers
-  void sendCommand(const String &command) const;
-  const String readReply(unsigned long timeout = DEFAULT_TIMEOUT) const;
-  bool findAnswer(char *anser, unsigned long timeout = DEFAULT_TIMEOUT) const;
-  bool wasCommandSuccessful(unsigned long timeout = DEFAULT_TIMEOUT) const;
-
-  // Parser Helpers
-  void parseIPData();
-
-  // Stream Helper
   void setTimeout(unsigned int timout) const;
   void flush() const;
   void flushIn() const;
   void flushOut() const;
+
+  // Commands
+  void sendCommand(const String &command) const;
+  const String readReply(unsigned long timeout = DEFAULT_TIMEOUT) const;
+  bool findAnswer(char *anser, unsigned long timeout = DEFAULT_TIMEOUT) const;
+  bool wasCommandSuccessful(unsigned long timeout = DEFAULT_TIMEOUT) const;
 };
 
 // Provide template definition
