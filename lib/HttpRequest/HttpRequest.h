@@ -40,7 +40,6 @@ public:
 private:
   String _path;
   String _request;
-  bool _parameterAdded;
 };
 
 #endif //__HTTPREQUEST_H__

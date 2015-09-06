@@ -27,19 +27,28 @@
 #include "HttpRequest.h"
 #include <String.h>
 
-static const char *lf = "\r\n";
+static const char LF[] PROGMEM = "\r\n";
+static const char GET[] PROGMEM = "GET ";
+static const char POST[] PROGMEM = "POST ";
+static const char HTTP[] PROGMEM = " HTTP/1.0";
+static const char FORM_URLENCODED[] PROGMEM = "Content-Type: application/x-www-form-urlencoded";
+static const char QUESTION_MARK[] PROGMEM = "?";
+// static const char CONTENT_LENGTH[] PROGMEM = "Content-Length: ";
+
+static void strcls(char *str)
+{
+  str[0] = 0;
+}
 
 HttpRequest::HttpRequest(const String &path)
 {
   _path = path;
-  _parameterAdded = false;
 }
 
 void HttpRequest::addParameter(const String &key, const String &value)
 {
-  if (!_parameterAdded)
-    _parameterAdded = true;
-  else
+  // Add separator
+  if (_request.length() != 0)
     _request += F("&");
 
   // Add parameter
@@ -53,13 +62,13 @@ const void HttpRequest::get(char *ret) const
   if (!ret)
     return;
 
-  ret[0] = 0;
-  strcat(ret, "GET ");
+  strcls(ret);
+  strcat_P(ret, GET);
   strcat(ret, _path.c_str());
-  strcat(ret, "?");
+  strcat_P(ret, QUESTION_MARK);
   strcat(ret, _request.c_str());
-  strcat(ret, lf);
-  strcat(ret, lf);
+  strcat_P(ret, LF);
+  strcat_P(ret, LF);
 }
 
 const void HttpRequest::post(char *ret) const
@@ -67,40 +76,20 @@ const void HttpRequest::post(char *ret) const
   if (!ret)
     return;
 
-  char contentLength[10];
-  snprintf(contentLength, 10, "%d", _request.length());
+  // char contentLength[10];
+  // snprintf(contentLength, 10, "%d", _request.length());
 
-  ret[0] = 0;
-  strcat(ret, "POST ");
+  strcls(ret);
+  strcat_P(ret, POST);
   strcat(ret, _path.c_str());
-  strcat(ret, " HTTP/1.1");
-  strcat(ret, lf);
-  strcat(ret, "Content-Type: application/x-www-form-urlencoded");
-  strcat(ret, lf);
-  strcat(ret, "Content-Length: ");
-  strcat(ret, contentLength);
-  strcat(ret, lf);
-  strcat(ret, lf);
+  strcat_P(ret, HTTP);
+  strcat_P(ret, LF);
+  strcat_P(ret, FORM_URLENCODED);
+  strcat_P(ret, LF);
+  // strcat_P(ret, CONTENT_LENGTH);
+  // strcat(ret, contentLength);
+  // strcat(ret, lf);
   strcat(ret, _request.c_str());
-
-
-/*
-  String retStr;
-  retStr += F("POST ");
-  retStr += _path;
-  retStr += F(" HTTP/1.1");
-  retStr += lf;
-
-  retStr += F("Content-Type: application/x-www-form-urlencoded");
-  retStr += lf;
-
-  retStr += F("Content-Length: ");
-  retStr += _request.length();
-  retStr += lf + lf;
-  retStr += _request;
-  retStr += lf;
-
-  return retStr;
-
-  */
+  strcat_P(ret, LF);
+  strcat_P(ret, LF);
 }
