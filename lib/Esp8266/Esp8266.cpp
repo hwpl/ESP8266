@@ -25,7 +25,7 @@
 // xceeth Technologies   j.hoffmann@xceeth.com
 
 #ifdef __ESP8266_H__
-#include "TimeHelper.h"
+#include "utility/TimeHelper.h"
 
 #define BAUD_MIN 2400
 #define BAUD_MAX 115200
