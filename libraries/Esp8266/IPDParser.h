@@ -85,6 +85,15 @@ public:
   unsigned int readPayload(char *buffer, unsigned int bufferSize);
 
   /**
+   *  Returns the payload as string
+   *
+   * @note Due to memory limitations, only use this method for small payloads.
+   * Otherwise, a stack overflow may occur.
+   * @return The payload as string.
+   */
+  String getPayload();
+
+  /**
    * Resets the parser with all values
    */
   void reset();

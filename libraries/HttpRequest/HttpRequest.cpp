@@ -32,6 +32,7 @@
 #include "HttpRequest.h"
 #include <String.h>
 
+// Strings stored in program memoy (flash)
 static const char LF[] PROGMEM = "\r\n";
 static const char GET[] PROGMEM = "GET ";
 static const char POST[] PROGMEM = "POST ";
@@ -39,6 +40,10 @@ static const char HTTP[] PROGMEM = " HTTP/1.0";
 static const char FORM_URLENCODED[] PROGMEM = "Content-Type: Application/x-www-form-urlencoded";
 static const char QUESTION_MARK[] PROGMEM = "?";
 static const char CONTENT_LENGTH[] PROGMEM = "Content-Length: ";
+
+// Converts a program memory string to a __FlashStringHelper,
+// such that the methods of the String class can recognize them.
+#define FLASH_STRING(ptr) ((__FlashStringHelper*)(ptr))
 
 static void strcls(char *str)
 {
@@ -62,21 +67,43 @@ void HttpRequest::addParameter(const String &key, const String &value)
   _request += value;
 }
 
-const void HttpRequest::get(char *ret) const
+void HttpRequest::get(char *ret) const
 {
   if (!ret)
     return;
 
+  // Clear string
   strcls(ret);
+
+  // Get + path
   strcat_P(ret, GET);
   strcat(ret, _path.c_str());
+
+  // Query string
   strcat_P(ret, QUESTION_MARK);
   strcat(ret, _request.c_str());
   strcat_P(ret, LF);
   strcat_P(ret, LF);
 }
 
-const void HttpRequest::post(char *ret) const
+String HttpRequest::get() const
+{
+  String ret;
+
+  // Get + path
+  ret += FLASH_STRING(GET);
+  ret += _path;
+
+  // Query string
+  ret += FLASH_STRING(QUESTION_MARK);
+  ret += _request;
+  ret += FLASH_STRING(LF);
+  ret += FLASH_STRING(LF);
+
+  return ret;
+}
+
+void HttpRequest::post(char *ret) const
 {
   if (!ret)
     return;
@@ -105,4 +132,30 @@ const void HttpRequest::post(char *ret) const
 
   // Query string
   strcat(ret, _request.c_str());
+}
+
+String HttpRequest::post() const
+{
+  String ret;
+
+  // Post field
+  ret += FLASH_STRING(POST);
+  ret += _path;
+  ret += FLASH_STRING(HTTP);
+  ret += FLASH_STRING(LF);
+
+  // URL-encoded field
+  ret += FLASH_STRING(FORM_URLENCODED);
+  ret += FLASH_STRING(LF);
+
+  // Content-Length field
+  ret += FLASH_STRING(CONTENT_LENGTH);
+  ret += _request.length();
+  ret += FLASH_STRING(LF);
+  ret += FLASH_STRING(LF);
+
+  // Query string
+  ret += _request;
+
+  return ret;
 }

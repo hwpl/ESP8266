@@ -98,6 +98,28 @@ unsigned int IPDParser::readPayload(char *buffer, unsigned int bufferSize)
   return readBytes;
 }
 
+
+String IPDParser::getPayload()
+{
+  String retStr;
+  static const unsigned int bufferSize = 32;
+  char buffer[bufferSize];
+
+  unsigned readBytes = 0;
+  do {
+    readBytes = readPayload(buffer, bufferSize-1);
+    if (readBytes)
+    {
+      // Terminate string
+      buffer[readBytes] = 0;
+      retStr += buffer;
+    }
+  }
+  while (_payloadLength || readBytes == bufferSize-1);
+
+  return retStr;
+}
+
 void IPDParser::reset()
 {
   symbol = -1;

@@ -39,8 +39,12 @@ class HttpRequest
 public:
   HttpRequest(const String &path);
   void addParameter(const String &key, const String &value);
-  const void get(char *ret) const;
-  const void post(char *ret) const;
+
+  void get(char *ret) const;
+  String get() const;
+
+  void post(char *ret) const;
+  String post() const;
 
 private:
   String _path;

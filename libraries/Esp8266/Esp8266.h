@@ -130,10 +130,10 @@ public:
    bool disconnect(unsigned channelId) const;
 
    /**
-    * Sends data over the connection channel to the server.
+    * Sends a buffer to the server.
     *
     * @note Command: AT+CIPSEND=<id>,<length>\r\n ... <bytes>
-    * @param channelId The channel to send the data.
+    * @param channelId The channel that is used to send the data.
     * @param bytes The buffer to send.
     * @param length The length of the buffer
     * @return Returns "true" if the command was successful, "false" otherwise.
@@ -141,9 +141,14 @@ public:
    bool send(unsigned char channelId, const char *bytes, const unsigned length) const;
 
    /**
-    * Receives
+    * Sends a string to the server.
+    *
+    * @note Command: AT+CIPSEND=<id>,<length>\r\n ... <bytes>
+    * @param channelId The channel that is used to send the data.
+    * @param string The string to send.
+    * @return Returns "true" if the command was successful, "false" otherwise.
     */
-   unsigned int receive(unsigned char channelId, char *buffer, unsigned int bufferSize);
+   bool send(unsigned char channelId, const String &string) const;
 
 private:
   // Serial Interface

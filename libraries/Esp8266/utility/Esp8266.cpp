@@ -251,6 +251,13 @@ bool Esp8266<T>::send(unsigned char channelId, const char *bytes, const unsigned
   return wasCommandSuccessful();
 }
 
+template <class T>
+bool Esp8266<T>::send(unsigned char channelId, const String &string) const
+{
+  return send(channelId, string.c_str(), string.length());
+}
+
+
 // -------------------------------------------------------------------------- //
 // Private
 // -------------------------------------------------------------------------- //
