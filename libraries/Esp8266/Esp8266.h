@@ -161,6 +161,6 @@ private:
 };
 
 // Provide template definition
-#include "Esp8266.cpp"
+#include <utility/Esp8266.cpp>
 
 #endif // __ESP8266_H__

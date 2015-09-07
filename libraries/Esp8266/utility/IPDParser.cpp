@@ -29,8 +29,8 @@
  *  SOFTWARE.
  */
 
-#include "TimeHelper.h"
-#include "IPDParser.h"
+#include <IPDParser.h>
+#include <utility/TimeHelper.h>
 
 // Non-terminal symbols
 static const char PLUS = '+';

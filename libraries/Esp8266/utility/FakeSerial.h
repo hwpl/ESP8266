@@ -32,7 +32,7 @@
 #ifndef __FAKESERIAL_H__
 #define __FAKESERIAL_H__
 
-#include "FakeStreamBuffer.h"
+#include <FakeStreamBuffer.h>
 
 class FakeSerial : public FakeStreamBuffer
 {
