@@ -31,9 +31,9 @@ static const char LF[] PROGMEM = "\r\n";
 static const char GET[] PROGMEM = "GET ";
 static const char POST[] PROGMEM = "POST ";
 static const char HTTP[] PROGMEM = " HTTP/1.0";
-static const char FORM_URLENCODED[] PROGMEM = "Content-Type: application/x-www-form-urlencoded";
+static const char FORM_URLENCODED[] PROGMEM = "Content-Type: Application/x-www-form-urlencoded";
 static const char QUESTION_MARK[] PROGMEM = "?";
-// static const char CONTENT_LENGTH[] PROGMEM = "Content-Length: ";
+static const char CONTENT_LENGTH[] PROGMEM = "Content-Length: ";
 
 static void strcls(char *str)
 {
@@ -76,20 +76,28 @@ const void HttpRequest::post(char *ret) const
   if (!ret)
     return;
 
-  // char contentLength[10];
-  // snprintf(contentLength, 10, "%d", _request.length());
+  char contentLength[10];
+  snprintf(contentLength, 10, "%d", _request.length());
 
+  // Clear string
   strcls(ret);
+
+  // Post field
   strcat_P(ret, POST);
   strcat(ret, _path.c_str());
   strcat_P(ret, HTTP);
   strcat_P(ret, LF);
+
+  // URL-encoded field
   strcat_P(ret, FORM_URLENCODED);
   strcat_P(ret, LF);
-  // strcat_P(ret, CONTENT_LENGTH);
-  // strcat(ret, contentLength);
-  // strcat(ret, lf);
+
+  // Content-Length field
+  strcat_P(ret, CONTENT_LENGTH);
+  strcat(ret, contentLength);
+  strcat_P(ret, LF);
+  strcat_P(ret, LF);
+
+  // Query string
   strcat(ret, _request.c_str());
-  strcat_P(ret, LF);
-  strcat_P(ret, LF);
 }
