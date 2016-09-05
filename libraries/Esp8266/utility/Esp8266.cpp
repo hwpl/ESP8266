@@ -223,12 +223,35 @@ bool Esp8266<T>::joinAccessPoint(const String &ssid, const String &passwd) const
 template <class T>
 bool Esp8266<T>::connect(unsigned channelId, const String &addr, unsigned port, ProtocolMode mode) const
 {
-  String modeString = (mode == TCP ? F("TCP") : F("UDP"));
+  String modeString;
+
+  switch (mode) {
+    case UDP:
+      modeString = F("UDP");
+      break;
+    case TCP:
+      modeString = F("TCP");
+      break;
+    case TLS:
+      modeString = F("SSL");
+      // init ssl buffer on the module
+      sendCommand(F("AT+CIPSSLSIZE=4096"));
+      if (!wasCommandSuccessful())
+        return false;
+      break;
+  }
+
   String cmd = buildSetCommand(F("CIPSTART"), String(channelId), quoteString(modeString), quoteString(addr), port);
 
   sendCommand(cmd);
 
   return wasCommandSuccessful(MEDIUM_TIMEOUT);
+}
+
+template <class T>
+bool Esp8266<T>::connectSecure(unsigned channelId, const String &addr) const
+{
+  return connect(channelId, addr, 443, TLS);
 }
 
 template <class T>

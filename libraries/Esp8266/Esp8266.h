@@ -44,6 +44,7 @@ public:
 
   typedef enum {
     TCP,            ///< Transmission control protocol for stateful communications (default)
+    TLS,            ///< Transport layer security over TCP
     UDP             ///< User datagram protocol for connection-less communications
   } ProtocolMode;
 
@@ -111,7 +112,7 @@ public:
    /**
     * Establishes a channel to a server.
     *
-    * @note: Command: AT+CIPSTART=<id>,"[TCP,UPD]","<address>",port
+    * @note: Command: AT+CIPSTART=<id>,"[TCP,UPD,SSL]","<address>",port
     * @param channelId The channelId to distinguise between multiple connections.
     * @param addr The address of the server. Provide either an IP-Address or the DNS name of the server.
     * @param port The port of the service to connect with.
@@ -119,6 +120,17 @@ public:
     * @return Returns "true" if the command was successful and the connection was established, "false" otherwise.
     */
    bool connect(unsigned channelId, const String &addr, unsigned int port, ProtocolMode mode = TCP) const;
+
+   /**
+    * Establishes a secured (SSL/TLS) connection to a server on port 443.
+    * The certificate is not checked in any way.
+    *
+    * @note: Command: AT+CIPSSLSIZE=4096 and AT+CIPSTART=<id>,"SSL","<address>",443
+    * @param channelId The channelId to distinguish between multiple connections.
+    * @param addr The address of the server. Provide either an IP-Address or the DNS name of the server.
+    * @return Returns "true" if the connection was established, "false" otherwise.
+    */
+   bool connectSecure(unsigned channelId, const String &addr) const;
 
    /**
     * Diconnects a channel to a server.
