@@ -101,7 +101,7 @@ public:
    /**
     * Joins the given access point.
     *
-    * @note: Command: AT+CWJAP=<ssid>,<passwd>
+    * @note: Command: AT+CWMODE_CUR=1 and AT+CWJAP_CUR=<ssid>,<passwd>
     * @param ssid The ssid of the access point to join.
     * @param passwd The password to join the network.
     * @return Returns "true" if the command was successful, "false" otherwise.

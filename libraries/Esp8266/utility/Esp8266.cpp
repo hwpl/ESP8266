@@ -208,7 +208,13 @@ bool Esp8266<T>::getMultipleConnections(bool &multipleConnections) const
 template <class T>
 bool Esp8266<T>::joinAccessPoint(const String &ssid, const String &passwd) const
 {
-  String cmd = buildSetCommand(F("CWJAP"), quoteString(ssid), quoteString(passwd));
+  // put module into client mode
+  sendCommand(F("AT+CWMODE_CUR=1"));
+
+  if (!wasCommandSuccessful())
+    return false;
+
+  String cmd = buildSetCommand(F("CWJAP_CUR"), quoteString(ssid), quoteString(passwd));
   sendCommand(cmd);
 
   return wasCommandSuccessful(LONG_TIMEOUT);
