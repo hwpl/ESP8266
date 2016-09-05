@@ -30,7 +30,7 @@
  */
 
 #include "HttpRequest.h"
-#include <String.h>
+//#include <String.h>
 
 // Strings stored in program memoy (flash)
 static const char LF[] PROGMEM = "\r\n";
