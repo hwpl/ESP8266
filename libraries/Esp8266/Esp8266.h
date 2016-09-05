@@ -73,7 +73,7 @@ public:
 
    /**
     * Changes the baud rate of the pair: connection and module.
-    * @note Command: AT+CIOBAUD=<baud>
+    * @note Command: AT+UART_CUR=<baud>,8,1,0,0
     * @parameter baud The new baud rate to set. The following rates are
     *   supported: 2400, 4800, 9600, 19200, 38400, 57600 and 115200.
     * @return True if the command was successful

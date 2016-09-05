@@ -167,7 +167,7 @@ bool Esp8266<T>::setBaud(unsigned long baud) const
     return false;
 
   // Send command
-  String cmd = buildSetCommand(F("CIOBAUD"), baud);
+  String cmd = buildSetCommand(F("UART_CUR"), String(baud), F("8"), F("1"), F("0"), F("0"));
   sendCommand(cmd);
 
   // Change baud, send some stuff and delete possible wrong characters
