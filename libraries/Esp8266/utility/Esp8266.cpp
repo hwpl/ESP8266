@@ -134,6 +134,12 @@ Esp8266<T>::Esp8266(T &serial) : _serial(serial) {
 };
 
 template <class T>
+T& Esp8266<T>::getSerial() const
+{
+    return _serial;
+}
+
+template <class T>
 bool Esp8266<T>::isOk() const
 {
   sendCommand(F("AT"));

@@ -55,6 +55,13 @@ public:
   Esp8266(T &serial);
 
   /**
+   * Get a reference to the serial used for communication. Can be used to with
+   * the IPDParser to read a reply from the server.
+   * @return Returns a reference to the serial.
+   */
+  T& getSerial() const;
+
+  /**
    * Checks the communication with the module.
    *
    * @note Command: AT
